@@ -3,9 +3,17 @@ angular.module('ngS3upload.services', []).
     this.uploads = 0;
     var self = this;
 
-    this.getUploadOptions = function (uri) {
+    this.getUploadOptions = function (uri, params) {
       var deferred = $q.defer();
-      $http.get(uri).
+      $http.get(uri, {
+          params:
+              {
+                  bucket: params.bucket,
+                  acl: params.acl,
+                  type: params.type,
+                  key: params.key
+              }
+      }).
         success(function (response, status) {
           deferred.resolve(response);
         }).error(function (error, status) {
@@ -24,14 +32,26 @@ angular.module('ngS3upload.services', []).
     };
 
 
-    this.upload = function (scope, uri, key, acl, type, accessKey, policy, signature, file) {
+    this.upload = function (scope, uri, s3file, acl, accessKey, policy, signature, file) {
+
       var deferred = $q.defer();
       scope.attempt = true;
 
+      var uploadParams = {
+          uri: uri,
+          key: s3file.key,
+          acl: acl,
+          accessKey: accessKey,
+          policy: policy,
+          signature: signature,
+          s3file: s3file,
+          file: file
+      };
+
       var fd = new FormData();
-      fd.append('key', key);
+      fd.append('key', s3file.key);
       fd.append('acl', acl);
-      fd.append('Content-Type', file.type);
+      fd.append('Content-Type', s3file.type);
       fd.append('AWSAccessKeyId', accessKey);
       fd.append('policy', policy);
       fd.append('signature', signature);
@@ -68,7 +88,7 @@ angular.module('ngS3upload.services', []).
           if (xhr.status === 204) { // successful upload
             scope.success = true;
             deferred.resolve(xhr);
-            scope.$emit('s3upload:success', xhr, {path: uri + key});
+            scope.$emit('s3upload:success', xhr, uploadParams);
           } else {
             scope.success = false;
             deferred.reject(xhr);

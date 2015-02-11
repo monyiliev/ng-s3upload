@@ -53,20 +53,23 @@ angular.module('ngS3upload.directives', []).
 
             var uploadFile = function () {
               var selectedFile = file[0].files[0];
-              var filename = selectedFile.name;
-              var ext = filename.split('.').pop();
+              var filenameArr = selectedFile.name.split('.');
+              var ext = filenameArr.pop();
+              var randFileName = opts.targetFilename ? filenameArr.join('.') : (new Date()).getTime() + '-' + S3Uploader.randomString(16);
+              var filename = opts.targetFilename ? scope.$eval(opts.targetFilename) : randFileName + "." + ext;
 
-              if(angular.isObject(opts.getManualOptions)) {
-                _upload(opts.getManualOptions);
-              } else {
-                S3Uploader.getUploadOptions(opts.getOptionsUri).then(function (s3Options) {
-                  _upload(s3Options);
-                }, function (error) {
-                  throw Error("Can't receive the needed options for S3 " + error);
-                });
-              }
+              var s3file = {
+                bucket: bucket,
+                acl: opts.acl,
+                name: filename,
+                randFileName: randFileName,
+                ext: ext,
+                type: selectedFile.type,
+                folder: opts.folder,
+                key: opts.folder + filename
+              };
 
-              function _upload(s3Options){
+              S3Uploader.getUploadOptions(opts.getOptionsUri, s3file).then(function (s3Options) {
                 if (opts.enableValidation) {
                   ngModel.$setValidity('uploading', false);
                 }
@@ -75,15 +78,14 @@ angular.module('ngS3upload.directives', []).
                 var key = opts.targetFilename ? scope.$eval(opts.targetFilename) : opts.folder + (new Date()).getTime() + '-' + S3Uploader.randomString(16) + "." + ext;
                 S3Uploader.upload(scope,
                     s3Uri,
-                    key,
+                    s3file,
                     opts.acl,
-                    selectedFile.type,
                     s3Options.key,
                     s3Options.policy,
                     s3Options.signature,
                     selectedFile
                   ).then(function () {
-                    ngModel.$setViewValue(s3Uri + key);
+                    ngModel.$setViewValue(s3Uri + s3file.folder + s3file.name);
                     scope.filename = ngModel.$viewValue;
 
                     if (opts.enableValidation) {
@@ -98,7 +100,7 @@ angular.module('ngS3upload.directives', []).
                       ngModel.$setValidity('succeeded', false);
                     }
                   });
-              }
+              });
             };
 
             element.bind('change', function (nVal) {
