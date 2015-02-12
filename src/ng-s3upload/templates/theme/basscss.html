@@ -1,0 +1,7 @@
+<div class="full-width block">
+  <button class="button-gray" type="button">Choose file</button>
+  <div class="progress m1 p1" ng-class="{active: uploading}" ng-show="attempt">
+    <div class="bar bg-green p1" style="width: {{ progress }}%;" ng-class="barClass()"></div>
+  </div>
+  <input type="file" style="display: none"/>
+</div>

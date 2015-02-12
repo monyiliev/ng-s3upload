@@ -175,9 +175,10 @@ angular.module('ngS3upload.directives', []).
         $scope.uploading = false;
 
         $scope.barClass = function () {
-          return {
-            "bar-success": $scope.attempt && !$scope.uploading && $scope.success
-          };
+          var bar_success = $attrs.barclass ? $attrs.barclass : "bar-success";
+          if ($scope.attempt && !$scope.uploading && $scope.success) {
+            return bar_success;
+          }
         };
       }],
       compile: function (element, attr, linker) {
@@ -290,6 +291,17 @@ angular.module('ngS3upload.directives', []).
   }]);
 angular.module('ngS3upload').run(['$templateCache', function($templateCache) {
   'use strict';
+
+  $templateCache.put('theme/basscss.html',
+    "<div class=\"full-width block\">\n" +
+    "  <button class=\"button-gray\" type=\"button\">Choose file</button>\n" +
+    "  <div class=\"progress m1 p1\" ng-class=\"{active: uploading}\" ng-show=\"attempt\">\n" +
+    "    <div class=\"bar bg-green p1\" style=\"width: {{ progress }}%;\" ng-class=\"barClass()\"></div>\n" +
+    "  </div>\n" +
+    "  <input type=\"file\" style=\"display: none\"/>\n" +
+    "</div>"
+  );
+
 
   $templateCache.put('theme/bootstrap2.html',
     "<div class=\"upload-wrap\">\n" +
